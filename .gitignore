@@ -23,4 +23,4 @@ Thumbs.db
 /apps/*/platforms/*
 /apps/*/www/*
 /apps/*/plugins/*
-/apps/*/hooks/*
+apps/player/

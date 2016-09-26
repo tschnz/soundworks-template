@@ -63,9 +63,11 @@ export default class PlayerExperience extends soundworks.Experience {
       // fake calibration
       this.beacon.txPower = -55; // in dB (see beacon service for detail)
       // set major / minor ID based on client id
-      this.beacon.major = 0;
-      this.beacon.minor = client.index;
-      this.beacon.restartAdvertising();
+      if (!this.standalone) {
+        this.beacon.major = 0;
+        this.beacon.minor = client.index;
+        this.beacon.restartAdvertising();
+      }
     }
 
     // INIT FAKE BEACON (for computer based debug)
@@ -86,7 +88,7 @@ export default class PlayerExperience extends soundworks.Experience {
         this.beaconCallback(pluginResult);
       }, 1000);
     }
-    
+
   }
 
   beaconCallback(pluginResult) {
