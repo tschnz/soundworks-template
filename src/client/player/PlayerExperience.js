@@ -1,14 +1,17 @@
 import * as soundworks from 'soundworks/client';
-import PlayerRenderer from './PlayerRenderer';
+import * as soundworksCordova from 'soundworks-cordova/client';
 
 const audioContext = soundworks.audioContext;
+const client = soundworks.client;
 
 const viewTemplate = `
   <canvas class="background"></canvas>
   <div class="foreground">
-    <div class="section-top flex-middle"></div>
+    <div class="section-top flex-middle">
+      <p class="big">Beacon ID: <%= major %>.<%= minor %></p>
+    </div>
     <div class="section-center flex-center">
-      <p class="big"><%= title %></p>
+      <p class="small" id="logValues"></p>
     </div>
     <div class="section-bottom flex-middle"></div>
   </div>
@@ -17,22 +20,24 @@ const viewTemplate = `
 // this experience plays a sound when it starts, and plays another sound when
 // other clients join the experience
 export default class PlayerExperience extends soundworks.Experience {
-  constructor(assetsDomain, standalone, audioFiles) {
+  constructor(assetsDomain, standalone, beaconUUID) {
     super(!standalone);
     this.standalone = standalone;
 
     this.platform = this.require('platform', { features: ['web-audio'] });
     if (!standalone) this.checkin = this.require('checkin', { showDialog: false });
-    this.loader = this.require('loader', {
-      assetsDomain: assetsDomain,
-      files: audioFiles,
-    });
+
+    // beacon only work in cordova mode since it needs access right to BLE
+    if (window.cordova) {
+      this.beacon = this.require('beacon', { uuid: beaconUUID });
+      this.beaconCallback = this.beaconCallback.bind(this);
+    }    
   }
 
   init() {
     // initialize the view
     this.viewTemplate = viewTemplate;
-    this.viewContent = { title: `Let's go!` };
+    this.viewContent = { major: this.beacon.major, minor: this.beacon.minor };
     this.viewCtor = soundworks.CanvasView;
     this.viewOptions = { preservePixelRatio: true };
     this.view = this.createView();
@@ -42,40 +47,56 @@ export default class PlayerExperience extends soundworks.Experience {
     super.start(); // don't forget this
 
     if (!this.hasStarted)
+      this.initBeacon();
       this.init();
 
     this.show();
 
-    // play the first loaded buffer immediately
-    const src = audioContext.createBufferSource();
-    src.buffer = this.loader.buffers[0];
-    src.connect(audioContext.destination);
-    src.start(audioContext.currentTime);
+  }
 
-    // play the second loaded buffer when the message `play` is received from
-    // the server, the message is send when another player joins the experience.
-    if (!this.standalone) {
-      this.receive('play', () => {
-        const delay = Math.random();
-        const src = audioContext.createBufferSource();
-        src.buffer = this.loader.buffers[1];
-        src.connect(audioContext.destination);
-        src.start(audioContext.currentTime + delay);
-      });
+  initBeacon() {
+
+    // initialize ibeacon service
+    if (this.beacon) {
+      // add callback, invoked whenever beacon scan is executed
+      this.beacon.addListener(this.beaconCallback);
+      // fake calibration
+      this.beacon.txPower = -55; // in dB (see beacon service for detail)
+      // set major / minor ID based on client id
+      this.beacon.major = 0;
+      this.beacon.minor = client.index;
+      this.beacon.restartAdvertising();
     }
 
-    // initialize rendering
-    this.renderer = new PlayerRenderer(100, 100);
-    this.view.addRenderer(this.renderer);
-
-    // this function is called before each update (`Renderer.render`) of the canvas
-    this.view.setPreRender(function(ctx, dt) {
-      ctx.save();
-      ctx.globalAlpha = 0.05;
-      ctx.fillStyle = '#000000';
-      ctx.rect(0, 0, ctx.canvas.width, ctx.canvas.height);
-      ctx.fill();
-      ctx.restore();
-    });
+    // INIT FAKE BEACON (for computer based debug)
+    else { 
+      this.beacon = {major:0, minor: client.index};
+      this.beacon.rssiToDist = function(){return 3 + 1*Math.random()};    
+      window.setInterval(() => {
+        var pluginResult = { beacons : [] };
+        for (let i = 0; i < 4; i++) {
+          var beacon = {
+            major: 0,
+            minor: i,
+            rssi: -45 - i * 5,
+            proximity : 'nearby',
+          };
+          pluginResult.beacons.push(beacon);
+        }
+        this.beaconCallback(pluginResult);
+      }, 1000);
+    }
+    
   }
+
+  beaconCallback(pluginResult) {
+    // diplay beacon list on screen
+    var log = 'Closeby Beacons: </br></br>';
+    pluginResult.beacons.forEach((beacon) => {
+      log += beacon.major + '.' + beacon.minor + ' dist: ' 
+            + Math.round( this.beacon.rssiToDist(beacon.rssi)*100, 2 ) / 100 + 'm' + '</br>' +
+             '(' + beacon.proximity + ')' + '</br></br>';
+    });
+    document.getElementById('logValues').innerHTML = log;
+  }  
 }
