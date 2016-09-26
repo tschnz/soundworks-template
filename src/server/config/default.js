@@ -10,7 +10,7 @@ const cwd = process.cwd();
 export default {
   // name of the application, used in the `.ejs` template and by default in
   // the `platform` service to populate its view
-  appName: 'Template',
+  appName: 'Cordova Template',
 
   // name of the environnement ('production' enable cache in express application)
   env: 'development',
@@ -54,7 +54,7 @@ export default {
 
   // socket.io configuration
   socketIO: {
-    url: '',
+    url: 'http://169.254.176.196:8000', // (for cordova app: this url is soundwork server's)
     transports: ['websocket'],
     // @note: EngineIO defaults
     // pingTimeout: 3000,
@@ -115,4 +115,10 @@ export default {
 
   // directory where error reported from the clients are written
   errorReporterDirectory: path.join(cwd, 'logs', 'clients'),
+
+  // iBeacon UUID
+  beaconUUID: '74278BDA-B644-4520-8F0C-720EAF059935',
+
+  // standalone mode (server-less Cordova application)
+  standalone: true,  
 }

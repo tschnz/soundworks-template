@@ -18,3 +18,9 @@
 npm-debug.log
 .DS_Store
 Thumbs.db
+
+# ignore cordova extra files
+/apps/*/platforms/*
+/apps/*/www/*
+/apps/*/plugins/*
+/apps/*/hooks/*

@@ -17,11 +17,12 @@ const viewTemplate = `
 // this experience plays a sound when it starts, and plays another sound when
 // other clients join the experience
 export default class PlayerExperience extends soundworks.Experience {
-  constructor(assetsDomain, audioFiles) {
-    super();
+  constructor(assetsDomain, standalone, audioFiles) {
+    super(!standalone);
+    this.standalone = standalone;
 
-    this.platform = this.require('platform', { features: ['web-audio', 'wake-lock'] });
-    this.checkin = this.require('checkin', { showDialog: false });
+    this.platform = this.require('platform', { features: ['web-audio'] });
+    if (!standalone) this.checkin = this.require('checkin', { showDialog: false });
     this.loader = this.require('loader', {
       assetsDomain: assetsDomain,
       files: audioFiles,
@@ -53,13 +54,15 @@ export default class PlayerExperience extends soundworks.Experience {
 
     // play the second loaded buffer when the message `play` is received from
     // the server, the message is send when another player joins the experience.
-    this.receive('play', () => {
-      const delay = Math.random();
-      const src = audioContext.createBufferSource();
-      src.buffer = this.loader.buffers[1];
-      src.connect(audioContext.destination);
-      src.start(audioContext.currentTime + delay);
-    });
+    if (!this.standalone) {
+      this.receive('play', () => {
+        const delay = Math.random();
+        const src = audioContext.createBufferSource();
+        src.buffer = this.loader.buffers[1];
+        src.connect(audioContext.destination);
+        src.start(audioContext.currentTime + delay);
+      });
+    }
 
     // initialize rendering
     this.renderer = new PlayerRenderer(100, 100);

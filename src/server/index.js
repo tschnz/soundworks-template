@@ -18,7 +18,16 @@ soundworks.server.init(config);
 
 // define the configuration object to be passed to the `.ejs` template
 soundworks.server.setClientConfigDefinition((clientType, config, httpRequest) => {
-  return {
+
+  let includeCordovaTags = false;
+  
+  if (httpRequest.query.cordova) {
+    includeCordovaTags = true;
+    config.assetsDomain = '';
+  }
+
+  const data = {
+    standalone: config.standalone,
     clientType: clientType,
     env: config.env,
     appName: config.appName,
@@ -26,7 +35,18 @@ soundworks.server.setClientConfigDefinition((clientType, config, httpRequest) =>
     version: config.version,
     defaultType: config.defaultClient,
     assetsDomain: config.assetsDomain,
+
+    // cordova / environment
+    beaconUUID: config.beaconUUID,
+    includeCordovaTags: includeCordovaTags,
+    env: config.env,
+    gaId: config.gaId,
   };
+
+  if (!config.standalone)
+    data.socketIO = config.socketIO;
+
+  return data;  
 });
 
 // create the experience
