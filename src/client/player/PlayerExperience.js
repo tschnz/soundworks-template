@@ -6,7 +6,7 @@ const client = soundworks.client;
 
 const viewTemplate = `
   <canvas class="background"></canvas>
-  <div class="foreground">
+  <div class="foreground background-beacon">
     <div class="section-top flex-middle">
       <p class="big">Beacon ID: <%= major %>.<%= minor %></p>
     </div>
@@ -81,7 +81,7 @@ export default class PlayerExperience extends soundworks.Experience {
             major: 0,
             minor: i,
             rssi: -45 - i * 5,
-            proximity : 'nearby',
+            proximity : 'fake, nearby',
           };
           pluginResult.beacons.push(beacon);
         }
