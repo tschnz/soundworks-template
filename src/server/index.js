@@ -25,9 +25,9 @@ soundworks.server.setClientConfigDefinition((clientType, config, httpRequest) =>
     includeCordovaTags = true;
     config.assetsDomain = '';
   }
-  else{
-    config.socketIO.url = ''; // for computer browser based debug
-  }
+  // else{
+  //   config.socketIO.url = ''; // for computer browser based debug
+  // }
 
   const data = {
     standalone: config.standalone,
