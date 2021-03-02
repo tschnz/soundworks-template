@@ -14,7 +14,7 @@
     "watch-process": "soundworks-template-build -p",
     "watch-process:inspect": "soundworks-template-build -i -p",
     "dev": "npm run build && (npm run watch-process:inspect server & soundworks-template-build -b -w)",
-    "postinstall": "mkdir -p .vendors/public && cp -R node_modules/@webcomponents/webcomponentsjs .vendors/public",
+    "postinstall": "node ./.bin/postinstall.js",
     "start": "node .build/server/index.js"
   },
   "repository": {
